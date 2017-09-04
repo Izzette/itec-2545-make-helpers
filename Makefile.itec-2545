@@ -1,0 +1,67 @@
+# Makefile.itec-2545
+
+# JNI Make Helpers configuration.
+JAVA_BASE := src/main/java
+C_BASE := src/main/c
+INPUT_UTILS_JAVA_BASE := input-utils/src/main/java
+
+define index_of
+$(words $(shell bash -c 'echo "$${2/$$1 */$$1}"' bash "$1" "$2"))
+endef
+
+define lab_question
+Question_$(call index_of,$1,$(QUESTIONS))_$1
+endef
+
+define lab_depends
+$(CLASSES)/$(LAB_PACKAGE)/$(call lab_question,$1).class: \
+		$(CLASSES)/com/izzette/jni_helpers/FeelingFast.class \
+		$(CLASSES)/input/InputUtils.class
+$(OBJECTS)/$1.o: \
+		$(INCLUDE)/$(LAB_PACKAGE)/$(call lab_question,$1).h
+$(LIB)/lib$1.so: \
+		$(OBJECTS)/$1.o
+$(JARS)/$1.jar: \
+		$(CLASSES)/$(LAB_PACKAGE)/$(call lab_question,$1).class \
+		$(CLASSES)/input/InputUtils.class \
+		$(LIB)/lib$1.so
+clean_early: | \
+		clean_java_jar_$1 \
+		clean_lib_shared_$1 \
+		clean_object_$1 \
+		clean_header_$(LAB_PACKAGE).$(call lab_question,$1) \
+		clean_java_class_$(LAB_PACKAGE).$(call lab_question,$1)
+clean: \
+		clean_java_jar_$1 \
+		clean_lib_shared_$1 \
+		clean_object_$1 \
+		clean_header_$(LAB_PACKAGE).$(call lab_question,$1) \
+		clean_java_class_$(LAB_PACKAGE).$(call lab_question,$1)
+$()
+endef
+
+.PHONY: default
+default: all
+
+include jni-make-helpers/Makefile.jni
+
+LAB_PACKAGE := $(addprefix week_,$(WEEK_NUMBER))
+LAB_JARS := $(patsubst %,$(JARS)/%.jar,$(QUESTIONS))
+
+.PHONY: prepare depends all clean clean_pre clean_post
+prepare: jni_prepare
+depends: prepare jni_depends
+all: prepare depends $(LAB_JARS)
+clean_early:
+clean_late: | clean_early jni_clean_early
+clean: clean_early clean_late jni_clean
+jni_clean_early: | clean_early
+jni_clean_late: | clean_late
+
+$(eval $(foreach q,$(QUESTIONS),$(call lab_depends,$(q))))
+
+$(eval $(call compile_java,$(INPUT_UTILS_JAVA_BASE),%,))
+clean_early: | clean_java_class_input.InputUtils
+clean: clean_java_class_input.InputUtils
+
+# vim: set ts=4 sw=4 noet syn=make:
