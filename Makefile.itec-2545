@@ -1,9 +1,15 @@
 # Makefile.itec-2545
 
+ITEC_2545_MAKEFILE_BASE := $(patsubst \
+	$(abspath $(shell pwd))/%,%,$(shell dirname $(abspath $(lastword $(MAKEFILE_LIST)))))
+
 # JNI Make Helpers configuration.
+CFLAGS ?= -Wall -Wextra -Wno-unused-parameter -O2 -pipe \
+		-fstack-protector-strong -D_FORTIFY_SOURCE=2
+LDFLAGS ?= -Wl,-O1,--sort-common,--as-needed,-z,relro
 JAVA_BASE := src/main/java
 C_BASE := src/main/c
-INPUT_UTILS_JAVA_BASE := input-utils/src/main/java
+INPUT_UTILS_JAVA_BASE := $(ITEC_2545_MAKEFILE_BASE)/input-utils/src/main/java
 
 define index_of
 $(words $(shell bash -c 'echo "$${2/$$1 */$$1}"' bash "$1" "$2"))
@@ -43,7 +49,7 @@ endef
 .PHONY: default
 default: all
 
-include jni-make-helpers/Makefile.jni
+include $(ITEC_2545_MAKEFILE_BASE)/jni-make-helpers/Makefile.jni
 
 LAB_PACKAGE := $(addprefix week_,$(WEEK_NUMBER))
 LAB_JARS := $(patsubst %,$(JARS)/%.jar,$(QUESTIONS))

@@ -1,0 +1,6 @@
+[submodule "input-utils"]
+	path = input-utils
+	url = https://github.com/Izzette/input-utils.git
+[submodule "jni-make-helpers"]
+	path = jni-make-helpers
+	url = https://github.com/Izzette/jni-make-helpers.git
