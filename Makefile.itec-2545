@@ -4,9 +4,8 @@ ITEC_2545_MAKEFILE_BASE := $(patsubst \
 	$(abspath $(shell pwd))/%,%,$(shell dirname $(abspath $(lastword $(MAKEFILE_LIST)))))
 
 # JNI Make Helpers configuration.
-CFLAGS ?= -Wall -Wextra -Wno-unused-parameter -O2 -pipe \
-		-fstack-protector-strong -D_FORTIFY_SOURCE=2
-LDFLAGS ?= -Wl,-O1,--sort-common,--as-needed,-z,relro
+CFLAGS ?= -Wall -Wextra -Wno-unused-parameter -O2
+CFLAGS := -I$(ITEC_2545_MAKEFILE_BASE)/include $(CFLAGS)
 JAVA_BASE := src/main/java
 C_BASE := src/main/c
 INPUT_UTILS_JAVA_BASE := $(ITEC_2545_MAKEFILE_BASE)/input-utils/src/main/java
@@ -24,9 +23,11 @@ $(CLASSES)/$(LAB_PACKAGE)/$(call lab_question,$1).class: \
 		$(CLASSES)/com/izzette/jni_helpers/FeelingFast.class \
 		$(CLASSES)/input/InputUtils.class
 $(OBJECTS)/$1.o: \
-		$(INCLUDE)/$(LAB_PACKAGE)/$(call lab_question,$1).h
+		$(INCLUDE)/$(LAB_PACKAGE)/$(call lab_question,$1).h \
+		$(ITEC_2545_MAKEFILE_BASE)/include/input.h \
+		$(ITEC_2545_MAKEFILE_BASE)/include/jni_helpers.h
 $(LIB)/lib$1.so: \
-		$(OBJECTS)/$1.o
+		$(OBJECTS)/$1.o $(OBJECTS)/input.o
 $(JARS)/$1.jar: \
 		$(CLASSES)/$(LAB_PACKAGE)/$(call lab_question,$1).class \
 		$(CLASSES)/input/InputUtils.class \
@@ -65,6 +66,10 @@ jni_clean_early: | clean_early
 jni_clean_late: | clean_late
 
 $(eval $(foreach q,$(QUESTIONS),$(call lab_depends,$(q))))
+clean_early: | clean_object_input
+clean: clean_object_input
+
+$(eval $(call compile_c,$(ITEC_2545_MAKEFILE_BASE)/src/main/c,%,))
 
 $(eval $(call compile_java,$(INPUT_UTILS_JAVA_BASE),%,))
 clean_early: | clean_java_class_input.InputUtils
